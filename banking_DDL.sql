@@ -177,9 +177,6 @@ CREATE TABLE [Transaction] (
 CREATE TABLE CustomerAccount (
     CustomerID        VARCHAR(25) NOT NULL,
     AccountID         VARCHAR(25) NOT NULL,
-    RelationshipType  VARCHAR(20) NOT NULL,
-    StartDate         DATE        NOT NULL,
-    EndDate           DATE        NULL,
     CONSTRAINT PK_CustomerAccount PRIMARY KEY (CustomerID, AccountID),
     CONSTRAINT FK_CustomerAccount_Customer FOREIGN KEY (CustomerID)
         REFERENCES Customer(CustomerID),
@@ -190,8 +187,6 @@ CREATE TABLE CustomerAccount (
 CREATE TABLE CustomerLoan (
     CustomerID     VARCHAR(25) NOT NULL,
     LoanID         VARCHAR(25) NOT NULL,
-    BorrowerType   VARCHAR(20) NOT NULL,
-    StartDate      DATE        NOT NULL,
     CONSTRAINT PK_CustomerLoan PRIMARY KEY (CustomerID, LoanID),
     CONSTRAINT FK_CustomerLoan_Customer FOREIGN KEY (CustomerID)
         REFERENCES Customer(CustomerID),
