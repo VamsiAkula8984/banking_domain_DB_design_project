@@ -30,197 +30,246 @@ PRINT 'Database - BankingDB created successfully!!';
 GO
 USE BankingDB;
 GO
-
-CREATE TABLE Branch (
+-- =========================================
+-- DDL Statements
+-- =========================================
+-- 1. Branch
+-- =========================================
+CREATE TABLE Branch
+(
     BranchID        VARCHAR(25)  NOT NULL,
-    BranchName      VARCHAR(50)  NOT NULL,
-    IFSCCode        CHAR(11)     NOT NULL,
-    AddressLine     VARCHAR(200) NULL,
-    City            VARCHAR(50)  NULL,
-    State           VARCHAR(50)  NULL,
-    Country         VARCHAR(50)  NULL,
-    ContactNumber   VARCHAR(15)  NULL,
+    BranchCode      CHAR(6)      NOT NULL,
+    Branch_name     VARCHAR(50)  NOT NULL,
+    PhoneNumber     CHAR(11)     NOT NULL,
+    AddressLine     VARCHAR(200) NOT NULL,
+    City            VARCHAR(50)  NOT NULL,
+    State           VARCHAR(50)  NOT NULL,
+    Country         VARCHAR(50)  NOT NULL,
+    Email           VARCHAR(50)  NOT NULL,
+
     CONSTRAINT PK_Branch PRIMARY KEY (BranchID),
-    CONSTRAINT UQ_Branch_IFSCCode UNIQUE (IFSCCode)
+    CONSTRAINT UQ_Branch_BranchCode UNIQUE (BranchCode),
+    CONSTRAINT UQ_Branch_PhoneNumber UNIQUE (PhoneNumber),
+    CONSTRAINT UQ_Branch_Email UNIQUE (Email)
 );
+GO
 
-CREATE TABLE Customer (
+-- =========================================
+-- 2. Customer
+-- =========================================
+CREATE TABLE Customer
+(
     CustomerID      VARCHAR(25)  NOT NULL,
-    FirstName       VARCHAR(50)  NOT NULL,
-    LastName        VARCHAR(50)  NOT NULL,
-    DateOfBirth     DATE         NULL,
+    First_name      VARCHAR(50)  NOT NULL,
+    Last_name       VARCHAR(50)  NOT NULL,
+    Date_of_birth   DATE         NOT NULL,
     Gender          VARCHAR(20)  NULL,
-    Email           VARCHAR(100) NULL,
-    PhoneNumber     VARCHAR(15)  NULL,
-    AddressLine     VARCHAR(200) NULL,
-    City            VARCHAR(50)  NULL,
-    State           VARCHAR(50)  NULL,
-    Country         VARCHAR(50)  NULL,
-    CreatedDate     DATETIME2    NOT NULL,
+    Email           VARCHAR(100) NOT NULL,
+    Phone_number    VARCHAR(15)  NOT NULL,
+    Address         VARCHAR(200) NOT NULL,
+    City            VARCHAR(50)  NOT NULL,
+    State           VARCHAR(20)  NOT NULL,
+    Country         VARCHAR(20)  NOT NULL,
+    ZipCode         VARCHAR(6)   NOT NULL,
+    Status          VARCHAR(20)  NOT NULL,
+
     CONSTRAINT PK_Customer PRIMARY KEY (CustomerID),
-    CONSTRAINT UQ_Customer_Email UNIQUE (Email)
+    CONSTRAINT UQ_Customer_Email UNIQUE (Email),
+    CONSTRAINT UQ_Customer_Phone UNIQUE (Phone_number),
+    CONSTRAINT CHK_Customer_Status CHECK (Status IN ('Active', 'Inactive', 'Blocked', 'Closed')),
+    CONSTRAINT CHK_Customer_Gender CHECK (Gender IN ('Male', 'Female', 'Other') OR Gender IS NULL)
 );
+GO
 
-CREATE TABLE Employee (
-    EmployeeID      VARCHAR(25)  NOT NULL,
-    FirstName       VARCHAR(50)  NOT NULL,
-    LastName        VARCHAR(50)  NOT NULL,
-    Email           VARCHAR(100) NULL,
-    PhoneNumber     VARCHAR(15)  NULL,
-    RoleName        VARCHAR(30)  NOT NULL,
-    HireDate        DATE         NOT NULL,
-    Salary          DECIMAL(12,2) NOT NULL,
+-- =========================================
+-- 3. Account
+-- =========================================
+CREATE TABLE Account
+(
+    AccountID       VARCHAR(25)  NOT NULL,
+    Account_number  VARCHAR(18)  NOT NULL,
+    Account_type    VARCHAR(10)  NOT NULL,
+    Balance         DECIMAL(14,2) NOT NULL,
+    Open_date       DATETIME     NOT NULL,
+    Close_date      DATETIME     NULL,
+    Status          VARCHAR(10)  NOT NULL,
     BranchID        VARCHAR(25)  NOT NULL,
-    CONSTRAINT PK_Employee PRIMARY KEY (EmployeeID),
-    CONSTRAINT FK_Employee_Branch FOREIGN KEY (BranchID)
-        REFERENCES Branch(BranchID),
-	CONSTRAINT UQ_Employee_Email UNIQUE (Email)
-);
 
-CREATE TABLE Account (
-    AccountID           VARCHAR(25)   NOT NULL,
-    AccountNumber       VARCHAR(18)   NOT NULL,
-    AccountType         VARCHAR(20)   NOT NULL,
-    Balance             DECIMAL(14,2) NOT NULL,
-    OpenDate            DATE          NOT NULL,
-    Status              VARCHAR(20)   NOT NULL,
-    CurrencyCode        CHAR(3)       NOT NULL,
-    BranchID            VARCHAR(25)   NOT NULL,
     CONSTRAINT PK_Account PRIMARY KEY (AccountID),
-    CONSTRAINT UQ_Account_AccountNumber UNIQUE (AccountNumber),
+    CONSTRAINT UQ_Account_AccountNumber UNIQUE (Account_number),
     CONSTRAINT FK_Account_Branch FOREIGN KEY (BranchID)
         REFERENCES Branch(BranchID),
-	CONSTRAINT chk_account_type 
-		CHECK(AccountType in ('Savings', 'Current', 'Checking')),
-	CONSTRAINT chk_status 
-		CHECK(Status in ('Active', 'Closed', 'Frozen'))
+    CONSTRAINT CHK_Account_Balance CHECK (Balance >= 0),
+    CONSTRAINT CHK_Account_Status CHECK (Status IN ('Active', 'Closed', 'Frozen', 'Inactive')),
+    CONSTRAINT CHK_Account_AccountType CHECK (Account_type IN ('Savings', 'Current', 'Salary')),
+    CONSTRAINT CHK_Account_CloseDate CHECK (Close_date IS NULL OR Close_date >= Open_date)
 );
+GO
 
-CREATE TABLE Loan (
-    LoanID                  VARCHAR(25)   NOT NULL,
-    LoanType                VARCHAR(20)   NOT NULL,
-    LoanAmount              DECIMAL(14,2) NOT NULL,
-    InterestRate            DECIMAL(5,2)  NOT NULL,
-    StartDate               DATE          NOT NULL,
-    EndDate                 DATE          NULL,
-    Status                  VARCHAR(20)   NOT NULL,
-    DisbursementAccountID   VARCHAR(25)   NULL,
+-- =========================================
+-- 4. Employee
+-- =========================================
+CREATE TABLE Employee
+(
+    EmployeeID      VARCHAR(25)   NOT NULL,
+    First_name      VARCHAR(50)   NOT NULL,
+    Last_name       VARCHAR(50)   NOT NULL,
+    Email           VARCHAR(100)  NOT NULL,
+    Phone_number    VARCHAR(15)   NOT NULL,
+    JobTitle        VARCHAR(30)   NOT NULL,
+    Hire_date       DATE          NOT NULL,
+    Salary          DECIMAL(10,2) NOT NULL,
+    ManagerID       VARCHAR(25)   NULL,
+    BranchID        VARCHAR(25)   NOT NULL,
+
+    CONSTRAINT PK_Employee PRIMARY KEY (EmployeeID),
+    CONSTRAINT UQ_Employee_Email UNIQUE (Email),
+    CONSTRAINT UQ_Employee_Phone UNIQUE (Phone_number),
+    CONSTRAINT FK_Employee_Branch FOREIGN KEY (BranchID)
+        REFERENCES Branch(BranchID),
+    CONSTRAINT FK_Employee_Manager FOREIGN KEY (ManagerID)
+        REFERENCES Employee(EmployeeID),
+    CONSTRAINT CHK_Employee_Salary CHECK (Salary >= 0),
+    CONSTRAINT CHK_Employee_NotSelfManager CHECK (ManagerID IS NULL OR ManagerID <> EmployeeID)
+);
+GO
+
+-- =========================================
+-- 5. Loan
+-- =========================================
+CREATE TABLE Loan
+(
+    LoanID          VARCHAR(25)   NOT NULL,
+    CustomerID      VARCHAR(25)   NOT NULL,
+    BranchID        VARCHAR(25)   NOT NULL,
+    Loan_type       VARCHAR(20)   NOT NULL,
+    [Description]   VARCHAR(MAX)  NULL,
+    Loan_amount     DECIMAL(14,2) NOT NULL,
+    Interest_rate   DECIMAL(5,2)  NOT NULL,
+    Start_date      DATE          NOT NULL,
+    End_date        DATE          NULL,
+    Status          VARCHAR(20)   NOT NULL,
+
     CONSTRAINT PK_Loan PRIMARY KEY (LoanID),
-    CONSTRAINT FK_Loan_DisbursementAccount FOREIGN KEY (DisbursementAccountID)
-        REFERENCES Account(AccountID),
-	CONSTRAINT chk_loan_type 
-		CHECK(LoanType in ('Home', 'Personal', 'Auto', 'Other')),
-	CONSTRAINT chk_loan_status 
-		CHECK(Status in ('Active', 'Closed', 'Defaulted'))
+    CONSTRAINT FK_Loan_Customer FOREIGN KEY (CustomerID)
+        REFERENCES Customer(CustomerID),
+    CONSTRAINT FK_Loan_Branch FOREIGN KEY (BranchID)
+        REFERENCES Branch(BranchID),
+    CONSTRAINT CHK_Loan_Amount CHECK (Loan_amount > 0),
+    CONSTRAINT CHK_Loan_Interest CHECK (Interest_rate > 0),
+    CONSTRAINT CHK_Loan_Status CHECK (Status IN ('Active', 'Closed', 'Defaulted', 'Pending')),
+    CONSTRAINT CHK_Loan_LoanType CHECK (Loan_type IN ('Personal', 'Home', 'Auto', 'Education', 'Other')),
+    CONSTRAINT CHK_Loan_EndDate CHECK (End_date IS NULL OR End_date >= Start_date)
 );
+GO
 
-CREATE TABLE LoanPayment (
-    PaymentID        VARCHAR(25)   NOT NULL,
-    LoanID           VARCHAR(25)   NOT NULL,
-    PaymentDate      DATETIME2     NOT NULL,
-    Amount           DECIMAL(14,2) NOT NULL,
-    PaymentMode      VARCHAR(20)   NOT NULL,
-    Status           VARCHAR(20)   NOT NULL,
-    CONSTRAINT PK_LoanPayment PRIMARY KEY (PaymentID),
-    CONSTRAINT FK_LoanPayment_Loan FOREIGN KEY (LoanID)
-        REFERENCES Loan(LoanID),
-	CONSTRAINT chk_payment_mode 
-		CHECK(PaymentMode in ('Cash', 'Online', 'Cheque', 'check'))
-);
+-- =========================================
+-- 6. CustomerAccount (bridge table)
+-- =========================================
+CREATE TABLE CustomerAccount
+(
+    CustomerID      VARCHAR(25)  NOT NULL,
+    AccountID       VARCHAR(25)  NOT NULL,
+    OwnershipRole   VARCHAR(25)  NOT NULL,
+    StartDate       DATE         NOT NULL,
+    Status          VARCHAR(20)  NOT NULL,
 
-CREATE TABLE Card (
-    CardID           VARCHAR(25)  NOT NULL,
-    CardNumber       VARCHAR(16)  NOT NULL,
-    CardType         VARCHAR(20)  NOT NULL,
-    ExpiryDate       DATE         NOT NULL,
-    IssueDate        DATE         NOT NULL,
-    Status           VARCHAR(20)  NOT NULL,
-    CONSTRAINT PK_Card PRIMARY KEY (CardID),
-    CONSTRAINT UQ_Card_CardNumber UNIQUE (CardNumber),
-    CONSTRAINT CK_Card_CardNumber_16Digits
-        CHECK (LEN(CardNumber) = 16 AND CardNumber NOT LIKE '%[^0-9]%'),
-	CONSTRAINT chk_card_type 
-		CHECK(CardType in ('Debit', 'Credit')),
-	CONSTRAINT chk_card_status
-		CHECK(Status in ('Active', 'blocked', 'expired'))
-);
-
-CREATE TABLE Beneficiary (
-    BeneficiaryID    VARCHAR(25)  NOT NULL,
-    BeneficiaryName  VARCHAR(100) NOT NULL,
-    AccountNumber    VARCHAR(18)  NOT NULL,
-    BankName         VARCHAR(100) NOT NULL,
-    IFSCCode         CHAR(11)     NOT NULL,
-    AddedDate        DATETIME2    NOT NULL,
-    CONSTRAINT PK_Beneficiary PRIMARY KEY (BeneficiaryID)
-);
-
-CREATE TABLE [Transaction] (
-    TransactionID    VARCHAR(25)   NOT NULL,
-    FromAccountID    VARCHAR(25)   NOT NULL,
-    ToAccountID      VARCHAR(25)   NULL,
-    TransactionType  VARCHAR(20)   NOT NULL,
-    Amount           DECIMAL(14,2) NOT NULL,
-    TransactionDate  DATETIME2     NOT NULL,
-    Description      VARCHAR(255)  NULL,
-    Status           VARCHAR(20)   NOT NULL,
-    ReferenceNumber  VARCHAR(30)   NULL,
-    CONSTRAINT PK_Transaction PRIMARY KEY (TransactionID),
-    CONSTRAINT FK_Transaction_FromAccount FOREIGN KEY (FromAccountID)
-        REFERENCES Account(AccountID),
-    CONSTRAINT FK_Transaction_ToAccount FOREIGN KEY (ToAccountID)
-        REFERENCES Account(AccountID)
-);
-
--- Bridge tables
-
-CREATE TABLE CustomerAccount (
-    CustomerID        VARCHAR(25) NOT NULL,
-    AccountID         VARCHAR(25) NOT NULL,
     CONSTRAINT PK_CustomerAccount PRIMARY KEY (CustomerID, AccountID),
     CONSTRAINT FK_CustomerAccount_Customer FOREIGN KEY (CustomerID)
         REFERENCES Customer(CustomerID),
     CONSTRAINT FK_CustomerAccount_Account FOREIGN KEY (AccountID)
-        REFERENCES Account(AccountID)
+        REFERENCES Account(AccountID),
+    CONSTRAINT CHK_CustomerAccount_Role CHECK (OwnershipRole IN ('Primary Holder', 'Joint Holder')),
+    CONSTRAINT CHK_CustomerAccount_Status CHECK (Status IN ('Active', 'Inactive', 'Removed'))
 );
+GO
 
-CREATE TABLE CustomerLoan (
-    CustomerID     VARCHAR(25) NOT NULL,
-    LoanID         VARCHAR(25) NOT NULL,
-    CONSTRAINT PK_CustomerLoan PRIMARY KEY (CustomerID, LoanID),
-    CONSTRAINT FK_CustomerLoan_Customer FOREIGN KEY (CustomerID)
+-- =========================================
+-- 7. Card
+-- =========================================
+CREATE TABLE [Card]
+(
+    CardID          VARCHAR(25)   NOT NULL,
+    CardNumber      VARCHAR(16)   NOT NULL,
+    CustomerID      VARCHAR(25)   NOT NULL,
+    AccountID       VARCHAR(25)   NOT NULL,
+    CardType        VARCHAR(10)   NOT NULL,
+    ExpiryDate      DATE          NOT NULL,
+    IssueDate       DATE          NOT NULL,
+    DailyLimit      DECIMAL(10,2) NOT NULL,
+    Status          VARCHAR(10)   NOT NULL,
+
+    CONSTRAINT PK_Card PRIMARY KEY (CardID),
+    CONSTRAINT UQ_Card_CardNumber UNIQUE (CardNumber),
+    CONSTRAINT FK_Card_Customer FOREIGN KEY (CustomerID)
         REFERENCES Customer(CustomerID),
-    CONSTRAINT FK_CustomerLoan_Loan FOREIGN KEY (LoanID)
-        REFERENCES Loan(LoanID)
-);
-
-CREATE TABLE AccountCard (
-    AccountID            VARCHAR(25) NOT NULL,
-    CardID               VARCHAR(25) NOT NULL,
-    IssuedToCustomerID   VARCHAR(25) NULL,
-    CardHolderName       VARCHAR(100) NULL,
-    IssueDate            DATE         NULL,
-    CONSTRAINT PK_AccountCard PRIMARY KEY (AccountID, CardID),
-    CONSTRAINT FK_AccountCard_Account FOREIGN KEY (AccountID)
+    CONSTRAINT FK_Card_Account FOREIGN KEY (AccountID)
         REFERENCES Account(AccountID),
-    CONSTRAINT FK_AccountCard_Card FOREIGN KEY (CardID)
-        REFERENCES Card(CardID),
-    CONSTRAINT FK_AccountCard_Customer FOREIGN KEY (IssuedToCustomerID)
-        REFERENCES Customer(CustomerID)
+    CONSTRAINT CHK_Card_Type CHECK (CardType IN ('Debit', 'Credit')),
+    CONSTRAINT CHK_Card_DailyLimit CHECK (DailyLimit >= 0),
+    CONSTRAINT CHK_Card_Status CHECK (Status IN ('Active', 'Blocked', 'Expired', 'Inactive')),
+    CONSTRAINT CHK_Card_Dates CHECK (ExpiryDate > IssueDate)
 );
+GO
 
-CREATE TABLE AccountBeneficiary (
-    AccountID        VARCHAR(25) NOT NULL,
-    BeneficiaryID    VARCHAR(25) NOT NULL,
-    AddedDate        DATETIME2   NOT NULL,
-    NickName         VARCHAR(50) NULL,
-    Status           VARCHAR(20) NOT NULL,
-    CONSTRAINT PK_AccountBeneficiary PRIMARY KEY (AccountID, BeneficiaryID),
-    CONSTRAINT FK_AccountBeneficiary_Account FOREIGN KEY (AccountID)
+-- =========================================
+-- 8. LoanPayment
+-- =========================================
+CREATE TABLE LoanPayment
+(
+    PaymentID           VARCHAR(25)   NOT NULL,
+    LoanID              VARCHAR(25)   NOT NULL,
+    PaymentDate         DATE          NOT NULL,
+    Amount              DECIMAL(14,2) NOT NULL,
+    Payment_method      VARCHAR(20)   NOT NULL,
+    Reference_number    VARCHAR(20)   NULL,
+    Remarks             VARCHAR(MAX)  NULL,
+    Status              VARCHAR(20)   NOT NULL,
+
+    CONSTRAINT PK_LoanPayment PRIMARY KEY (PaymentID),
+    CONSTRAINT FK_LoanPayment_Loan FOREIGN KEY (LoanID)
+        REFERENCES Loan(LoanID),
+    CONSTRAINT CHK_LoanPayment_Amount CHECK (Amount > 0),
+    CONSTRAINT CHK_LoanPayment_Method CHECK (Payment_method IN ('Auto Debit', 'Cash', 'Cheque', 'Online Transfer')),
+    CONSTRAINT CHK_LoanPayment_Status CHECK (Status IN ('Completed', 'Pending', 'Failed'))
+);
+GO
+
+-- =========================================
+-- 9. Transaction
+-- =========================================
+CREATE TABLE [Transaction]
+(
+    TxnID           VARCHAR(25)   NOT NULL,
+    from_acct_id    VARCHAR(25)   NULL,
+    to_acct_id      VARCHAR(25)   NULL,
+    Txn_type        VARCHAR(20)   NOT NULL,
+    Amount          DECIMAL(10,2) NOT NULL,
+    Txn_date        DATETIME      NOT NULL,
+    [Description]   VARCHAR(MAX)  NULL,
+    Status          VARCHAR(10)   NOT NULL,
+    Ref_num         VARCHAR(30)   NULL,
+
+    CONSTRAINT PK_Transaction PRIMARY KEY (TxnID),
+    CONSTRAINT FK_Transaction_FromAccount FOREIGN KEY (from_acct_id)
         REFERENCES Account(AccountID),
-    CONSTRAINT FK_AccountBeneficiary_Beneficiary FOREIGN KEY (BeneficiaryID)
-        REFERENCES Beneficiary(BeneficiaryID)
+    CONSTRAINT FK_Transaction_ToAccount FOREIGN KEY (to_acct_id)
+        REFERENCES Account(AccountID),
+    CONSTRAINT CHK_Transaction_Amount CHECK (Amount > 0),
+    CONSTRAINT CHK_Transaction_Status CHECK (Status IN ('Success', 'Pending', 'Failed', 'Reversed')),
+    CONSTRAINT CHK_Transaction_Type CHECK (Txn_type IN ('Deposit', 'Withdrawal', 'Transfer', 'Fee Debit', 'Loan Auto Debit')),
+    CONSTRAINT CHK_Transaction_Accounts CHECK (
+        from_acct_id IS NOT NULL
+        OR to_acct_id IS NOT NULL
+    ),
+    CONSTRAINT CHK_Transaction_DepositWithdrawalTransfer CHECK (
+        (Txn_type = 'Deposit' AND from_acct_id IS NULL AND to_acct_id IS NOT NULL)
+        OR
+        (Txn_type = 'Withdrawal' AND from_acct_id IS NOT NULL AND to_acct_id IS NULL)
+        OR
+        (Txn_type IN ('Transfer', 'Fee Debit', 'Loan Auto Debit') AND from_acct_id IS NOT NULL)
+    )
 );
-
+GO
 
 
